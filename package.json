@@ -1,0 +1,46 @@
+{
+  "name": "sisyphus-a_hyperlocal_marketplace",
+  "version": "1.0.0",
+  "description": "This is a hyperlocal supermarket",
+  "main": "server.js",
+  "scripts": {
+<<<<<<< HEAD
+    "test": "nodemon --exec babel-node api/server",
+    "start": "npm run build && node dist/server",
+    "build": "rimraf dist/ && babel api/ --out-dir dist/ --ignore ./node_modules,./.babelrc,./package.json,./npm-debug.log --copy-files"
+=======
+    "test": "nodemon --exec babel-node api/server.js",
+    "start": "npm run build && node dist/server",
+    "build": "rimraf dist/ && babel ./api/ --out-dir dist/ --ignore ./node_modules,./.babelrc,./package.json,./npm-debug.log --copy-files"
+>>>>>>> 8dd432488c9bf2066906fd18b823e8edc538ba23
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/utkarsh-singh-au7/sisyphus.git"
+  },
+  "author": "Sahil and Utkarsh",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/utkarsh-singh-au7/sisyphus/issues"
+  },
+  "homepage": "https://github.com/utkarsh-singh-au7/sisyphus#readme",
+  "dependencies": {
+    "@babel/cli": "^7.10.1",
+    "@babel/core": "^7.10.2",
+    "@babel/node": "^7.10.1",
+    "@babel/preset-env": "^7.10.2",
+    "algoliasearch": "^4.3.0",
+    "bcrypt": "^5.0.0",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "express-validator": "^6.5.0",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^5.9.18",
+    "nodemailer": "^6.4.10",
+    "rimraf": "^2.6.1"
+  },
+  "devDependencies": {
+    "@babel/plugin-transform-runtime": "^7.10.3",
+    "morgan": "^1.10.0"
+  }
+}
