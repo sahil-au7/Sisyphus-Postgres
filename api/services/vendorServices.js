@@ -22,14 +22,13 @@ services.signup = (data) =>
       const hash = await encryptionService.encrypt(password);
 
       const vendor = await new Vendor({
-        location: {
-          type: "Point",
-          coordinates: [Number(lng), Number(lat)],
-        },
-        password: hash,
-        ...remData,
-        isLoggedIn: true
-      }).save();
+          lat: Number(lat),
+          lng: Number(lng),
+          password: hash,
+          ...remData,
+          isLoggedIn: true
+        })
+        .save();
 
       //Generate Token
       const token = await jwt.generate(vendor);
@@ -61,16 +60,20 @@ services.login = req =>
       } = req.body;
 
       const vendor = await Vendor.findOneAndUpdate({
-        email,
-      }, {
-        $set: {
-          login_at: Date.now(), //Update login_at,
-          isLoggedIn: true //Update isLoggedIn flag
-        },
-      }, {
-        runValidators: true,
-        new: true,
-      })
+          email,
+        }, {
+          $set: {
+            login_at: Date.now(), //Update login_at,
+            isLoggedIn: true //Update isLoggedIn flag
+          },
+        }, {
+          runValidators: true,
+          new: true,
+        })
+        .exec()
+
+        console.log(vendor)
+      
 
       //Generate Token
       const token = await jwt.generate(vendor);
@@ -99,8 +102,10 @@ services.details = (req) =>
 
       //Find vendor without products
       const vendor = await Vendor.findOne({
-        _id,
-      }).lean(); //Get plain object
+          _id,
+        })
+        .lean()
+        .exec()
 
       //If vendor has opted to get product details, fetch the products from algolia
       if (p === "1") {
@@ -124,13 +129,14 @@ services.update = (req) =>
     try {
       //Update
       const vendor = await Vendor.findOneAndUpdate({
-        _id: req._id,
-      }, {
-        $set: req.body,
-      }, {
-        runValidators: true,
-        new: true,
-      });
+          _id: req._id,
+        }, {
+          $set: req.body,
+        }, {
+          runValidators: true,
+          new: true,
+        })
+        .exec()
 
       res(vendor);
     } catch (error) {

@@ -29,7 +29,7 @@ controller.login = async (req, res) => {
     //Login vendor
     const vendor = await vendorService.login(req);
 
-    res.status(201).json(vendor);
+    res.status(200).json(vendor);
   } catch (e) {
     handleErrors(e, res)
   }

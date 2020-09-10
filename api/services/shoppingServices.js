@@ -3,6 +3,8 @@ import Status from '../enums/orderEnum'
 import Order from '../models/orderModel'
 import searchUtil from '../utilities/searchUtil'
 import productServices from '../services/productService'
+import Cart from '../models/cartModel'
+import Product from '../models/productModel'
 
 const services = {}
 
@@ -15,21 +17,18 @@ services.addToCart = req => new Promise(async (res, rej) => {
         //Get products
         let searchIds = typeof req.body.searchId === "string" ? [req.body.searchId] : req.body.searchId
 
-        //Push the products to user cart array
-        const results = await User.findOneAndUpdate({
-            _id
-        }, {
-            $push: {
-                cart: {
-                    $each: searchIds
-                }
+        const cart = searchIds.map(element => {
+            return {
+                userId: _id,
+                searchId: element
             }
-        }, {
-            runValidators: true,
-            new: true
-        })
+        });
 
-        res(results.cart)
+        //Push the products to user cart array
+        const results = await Cart.insertMany(cart)
+            .exec()
+
+        res(results)
     } catch (e) {
         console.log(e)
         rej(e)
@@ -46,35 +45,34 @@ services.checkout = req => new Promise(async (res, rej) => {
         const addressId = req.params.addressId
 
         //Get cart
-        const cart = await User.findOne({
-                _id
+        const cart = await Cart.find({
+                userId: _id
             })
-            .select('cart')
+            .exec()
 
-        //Create order object 
-        const objs = cart.cart.map(searchId => {
+        // Create order object 
+        const objs = cart.map(searchId => {
             return {
                 userId: _id,
-                vendorId: searchUtil.vendorId(searchId),
-                productId: searchUtil.productId(searchId),
+                vendorId: searchUtil.vendorId(searchId.searchId),
+                productId: searchUtil.productId(searchId.searchId),
                 addressId: addressId,
                 status: Status.PENDING
             }
         })
 
-        //Save orders
-        const orders = await Order.insertMany(objs)
+        // //Save orders
+        const orders = Order.insertMany(objs).exec()
 
         //Clear cart
-        await User.findOneAndUpdate({
-            _id
-        }, {
-            $set: {
-                cart: []
-            }
-        })
+        const clearCart = Cart.deleteOne({
+                userId: _id
+            })
+            .exec()
 
-        res(orders)
+        const results = await Promise.all([orders, clearCart])
+
+        res(results[0])
     } catch (e) {
         console.log(e)
         rej(e)
@@ -91,16 +89,17 @@ services.cancelOrder = req => new Promise(async (res, rej) => {
         const userId = req._id
 
         const results = await Order.findOneAndUpdate({
-            _id,
-            userId
-        }, {
-            $set: {
-                status: Status.CANCELLED
-            }
-        }, {
-            runValidators: true,
-            new: true
-        })
+                _id,
+                userId
+            }, {
+                $set: {
+                    status: Status.CANCELLED
+                }
+            }, {
+                runValidators: true,
+                new: true
+            })
+            .exec()
 
         res(results)
     } catch (e) {
@@ -131,7 +130,7 @@ services.vendorAction = req => new Promise(async (res, rej) => {
         }, {
             runValidators: true,
             new: true
-        })
+        }).exec()
 
         res(results)
     } catch (e) {
@@ -149,19 +148,19 @@ services.getUserOrders = req => new Promise(async (res, rej) => {
         //Get query params
         const status = req.query.status
 
-        //TODO: query for full user details, vendor details, products 
-
         //Results
-        const results = await status === undefined ?
+        const promise = status === undefined ?
             Order.find({
                 userId: _id
-            }) :
+            }).exec() :
             Order.find({
                 userId: _id,
                 status
-            }).lean()
+            }).exec()
 
-        res(results)
+        const results = await promise
+
+        res(results.length === 0 ? `No ${status} orders` : results)
     } catch (e) {
         console.log(e)
         rej(e)
@@ -177,19 +176,19 @@ services.getVendorOrders = req => new Promise(async (res, rej) => {
         //Get query params
         const status = req.query.status
 
-        //TODO: query for full user details, vendor details, products 
-
         //Results
-        const results = await status === undefined ?
+        const promise = status === undefined ?
             Order.find({
                 vendorId: _id
-            }) :
+            }).exec() :
             Order.find({
                 vendorId: _id,
                 status
-            }).lean()
+            }).exec()
 
-        res(results)
+        const results = await promise
+
+        res(results.length === 0 ? `No ${status} orders` : results)
     } catch (e) {
         console.log(e)
         rej(e)
@@ -203,17 +202,24 @@ services.getCart = req => new Promise(async (res, rej) => {
         const _id = req._id
 
         //Results
-        const results = await User.findOne({
-            _id
-        }).select('cart')
+        const results = await Cart.find({
+                userId: _id
+            })
+            .exec()
 
         //Get Products ids from search ids
-        const productIds = results.cart.map(searchId => searchUtil.productId(searchId))
+        const productIds = results.map(searchId => searchUtil.productId(searchId.searchId))
+
+        const promises = productIds.map(productId => {
+            return Product.findOne({
+                _id: productId
+            }).exec()
+        })
 
         //Get Products
-        const results2 = await productServices.getProductsById(productIds)
+        const results2 = await Promise.all(promises)
 
-        res(results2.results.length === 0 ? 'No Products in cart' : results2.results)
+        res(results2.length === 0 ? 'No Products in cart' : results2)
     } catch (e) {
         console.log(e)
         rej(e)

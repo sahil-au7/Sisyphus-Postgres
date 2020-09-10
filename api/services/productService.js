@@ -44,32 +44,18 @@ services.addProducts = (req) => new Promise(async (res, rej) => {
 
         products = products.results.map(p => {
             const obj = {
-                _id: Types.ObjectId(),
                 name: p.name,
                 price: p.price,
                 brand: p.brand,
-                vendorId: req._id
+                vendor_id: _id
             }
             return obj
         })
 
-        const ids = products.map(e => e._id)
-
         // //Create new products
-        const promise1 = Product.insertMany(products)
-        const promise2 = Vendor.findOneAndUpdate({
-            _id: req._id
-        }, {
-            $push: {
-                products: {
-                    $each: ids
-                }
-            }
-        })
+        const product = await Product.insertMany(products).exec()
 
-        const results = await Promise.all([promise1, promise2])
-
-        res('Ok')
+        res(product)
     } catch (e) {
         console.log(e)
         rej(e)
@@ -84,10 +70,11 @@ services.getInventory = req => new Promise(async (res, rej) => {
 
         //Get products from db
         const products = await Product.find({
-            vendorId: _id
-        })
+                vendor_id: _id
+            })
+            .exec()
 
-        res(products)
+        res(products.length === 0 ? 'No products in inventory' : products)
     } catch (error) {
         console.log(error)
         rej(error)
@@ -103,11 +90,11 @@ services.deleteProduct = req => new Promise(async (res, rej) => {
         } = req.params
 
         //Get products from db
-        await Product.deleteOne({
+        const results = await Product.deleteOne({
             _id: productId
-        })
+        }).exec()
 
-        res('Deleted')
+        res(results)
 
     } catch (error) {
         console.log(error)

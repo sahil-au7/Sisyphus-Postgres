@@ -12,15 +12,16 @@ import controller from "../controllers/addressController";
 
 const router = express.Router();
 
-//TODO: get all addresses
+//GET Get user addresses
+router.get('/', controller.getAddress)
 
 //POST Add address
-router.post("/", validator.address, handleValidationErrors, controller.addAddress);
+router.post("/", validator.addAddress, handleValidationErrors, controller.addAddress);
 
 //PATCH Update address
-router.patch("/:id", controller.updateAddress);
+router.patch("/:id", validator.checkAddress, handleValidationErrors, controller.updateAddress);
 
 //DELETE Delete address
-router.delete("/:id", controller.deleteAddress);
+router.delete("/:id", validator.checkAddress, handleValidationErrors, controller.deleteAddress);
 
 export default router;

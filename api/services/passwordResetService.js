@@ -31,14 +31,16 @@ services.forgotPassword = req => new Promise(async (res, rej) => {
         }, {
             $set: {
                 passwordResetToken,
-                passwordResetExpires
+                passwordResetExpires,
+                isLoggedIn : false
             }
         }, {
             validateBeforeSave: false
-        });
+        })
+        .exec()
 
         //The url that will be sent via email to reset the password
-        const resetURL = `${req.protocol}://${req.get("host")}/${model.collection.collectionName.slice(0, -1)}/passwordReset/${token.resetToken}`;
+        const resetURL = `${req.protocol}://${req.get("host")}/${model.name.toLowerCase()}/passwordReset/${token.resetToken}`;
 
         //Send password reset link 
         const promise2 = sendEmail({
@@ -83,6 +85,7 @@ services.resetPassword = req => new Promise(async (res, rej) => {
                 passwordResetExpires: undefined
             }
         })
+        .exec()
 
         res('Password reset successfully. Go to login page.');
     } catch (error) {

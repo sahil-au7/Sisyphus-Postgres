@@ -5,6 +5,7 @@ import {
 import passwordResetValidator from '../validators/passwordResetValidator'
 import controller from "../controllers/passwordResetController";
 import model from '../middlewares/model'
+import authorize from "../middlewares/auth";
 
 const router = express.Router();
 

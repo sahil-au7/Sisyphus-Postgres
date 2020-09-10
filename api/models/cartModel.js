@@ -1,10 +1,10 @@
-import schema from '../schema/addressSchema'
+import schema from '../schema/cartSchema'
 import PgInterface from '../interfaces/PgInterface'
 
-class Address extends PgInterface {
+class Cart extends PgInterface {
   constructor(data) {
     super(data, schema)
   }
 }
 
-export default Address
+export default Cart

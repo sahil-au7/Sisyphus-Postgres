@@ -11,9 +11,6 @@ import productRoutes from '../routes/productRoutes'
 import inventoryRoutes from '../routes/inventoryRoutes'
 import passwordResetRoutes from './passwordResetRoutes'
 
-import Vendor from '../models/vendorModel'
-import User from '../models/userModel'
-
 import authorize from "../middlewares/auth";
 
 const routes = express.Router();

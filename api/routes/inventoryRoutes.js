@@ -11,7 +11,7 @@ import controller from "../controllers/inventoryController";
 const router = express.Router();
 
 //POST Add Products to vendor inventory
-router.post("/", check("productId").isArray(), handleValidationErrors, controller.addProduct);
+router.post("/", check("productId", "Must be array of products").isArray(), handleValidationErrors, controller.addProduct);
 
 //GET get products from vendor inventory
 router.get('/', controller.getInventory)

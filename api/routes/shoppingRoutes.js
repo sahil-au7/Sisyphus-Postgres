@@ -4,10 +4,12 @@
  * checkout.
  */
 import express from 'express'
-import authorize from '../middlewares/auth'
 import {
     handleValidationErrors
 } from "../errorHandlers/ErrorHandlers";
+import {
+    check
+} from "express-validator";
 import controller from '../controllers/shoppingController'
 import validators from '../validators/shoppingValidators'
 
@@ -17,7 +19,7 @@ const router = express.Router()
 router.get('/search', validators.search, handleValidationErrors, controller.search)
 
 //POST Add products to cart
-router.post('/cart', controller.addToCart)
+router.post('/cart', check("searchId", "Must be array of search ids").isArray(), handleValidationErrors, controller.addToCart)
 
 //GET Get all products in cart
 router.get('/cart', controller.getCart)

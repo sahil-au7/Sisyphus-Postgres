@@ -4,6 +4,10 @@ import {
     param
 } from 'express-validator'
 
+import {
+    Op
+} from 'sequelize'
+
 import Error from '../errorHandlers/CustomError'
 
 import tokenUtil from '../utilities/tokenUtil'
@@ -26,7 +30,7 @@ validator.forgotPassword = [
             //Get document from db
             const doc = await model.findOne({
                 email
-            })
+            }).exec()
 
             //If document is not found throw error
             if (!doc) throw new Error(404, "Email Not Found")
@@ -70,11 +74,12 @@ validator.resetPassword = [
 
             //Check if the token is valid
             const result = await model.findOne({
-                passwordResetToken: hashedToken,
-                passwordResetExpires: {
-                    $gt: Date.now()
-                },
-            });
+                    passwordResetToken: hashedToken,
+                    // passwordResetExpires: {
+                    //     [Op.gte]: Date.now() TODO: check expiry time
+                    // },
+                })
+                .exec()
 
             //If token is not valid throw error
             if (!result) throw new Error(401, "Token is invalid or has expired")

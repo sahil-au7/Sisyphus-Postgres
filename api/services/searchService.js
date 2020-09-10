@@ -6,6 +6,7 @@ import searchUtil from '../utilities/searchUtil'
 import Vendor from '../models/vendorModel'
 import Product from '../models/productModel'
 import productService from '../services/productService'
+import sequelize from 'sequelize'
 
 const service = {}
 
@@ -20,65 +21,22 @@ service.userSearch = (req) => new Promise(async (res, rej) => {
             lng
         } = req.body
 
-        // //Filter vendors based on user location and radius
-        // const vendors = await Vendor.aggregate()
-        //     .near({
-        //         near: {
-        //             type: "Point",
-        //             coordinates: [Number(lng), Number(lat)]
-        //         },
-        //         maxDistance: Number(radius),
-        //         spherical: true,
-        //         distanceField: "distance"
-        //     }) //Select vendors in the given radius
-        //     .project('products _id contact name') //Select only name , contact , _id , products
-        //     .unwind('products') //Split the products into object containing the vendor details and individal productId
+        const paginate = req.query.page === undefined ? '' : `LIMIT 5 OFFSET ${5*(Number(req.query.page)-1)}`
 
-        // //Perform Search
-        // const results = searchUtil.parse(await algolia.search(search))
+        //Get vendors in a given radius 
+        const results = await db.query(`SELECT vendors._id as vendor_id ,vendors.name as vendor_name,
+         contact, email, products.name as product_name, price , brand, products._id as product_id 
+         FROM vendors 
+         INNER JOIN products 
+         ON products.vendor_id = vendors._id 
+         WHERE earth_box(ll_to_earth(${lat}, ${lng}), ${Number(radius)}) @> ll_to_earth(lat, lng) 
+         AND LOWER(products.name) 
+         LIKE LOWER('%${search}%')
+         ${paginate}`)
 
-        // // const results = await productService.getProductsById(
-        // //     vendors.map(v => v.products)
-        // // )
-
-        // // console.log(results)
-
-        // //Get only those products which are present in search
-        // const products = vendors.map(vendor => {
-        //     //Get all the products this vendor is selling and is searched by the user
-        //     let product = results.filter(pdct => pdct.objectID === vendor.products)[0]
-
-        //     return product === undefined ? undefined : searchUtil.object(vendor, product)
-        // }).filter(e => e) //Filter undefined
-
-        // console.log(results, vendors)
-
-        // //Filter vendors based on user location and radius
-        const vendors = await Vendor.aggregate()
-            .near({
-                near: {
-                    type: "Point",
-                    coordinates: [Number(lng), Number(lat)]
-                },
-                maxDistance: Number(radius),
-                spherical: true,
-                distanceField: "distance"
-            })
-            .lookup({
-                from: 'products',
-                localField: '_id',
-                foreignField: 'vendorId',
-                as: 'product'
-            })
-            .project('product -_id name contact')
-            .unwind('product')
-            .match({
-                'product.name': searchUtil.partialTextSearch(search)
-            })
-
-        res(vendors.map(e => {
-            e.searchId = searchUtil.object(e.product.vendorId, e.product._id)
-            return e
+        res(results[0].map(r => {
+            r.search_id = searchUtil.object(r.vendor_id, r.product_id)
+            return r
         }))
     } catch (e) {
         console.log(e)

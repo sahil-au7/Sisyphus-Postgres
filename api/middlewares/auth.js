@@ -24,12 +24,12 @@ export default async (req, res, next) => {
             //Check if the token is latest token
             const model = req.baseUrl.split('/')[1] === 'vendor' ? Vendor : User
 
-            const isLoggedIn = await model.findOne({
-                _id: req._id,
-                isLoggedIn : true
+            const doc = await model.findOne({
+                _id: req._id
             })
+            .exec()
 
-            if (!isLoggedIn) throw new Error(401, 'Invalid Token')
+            if (!doc.isLoggedIn) throw new Error(401, 'Invalid Token')
 
             next();
         } else {

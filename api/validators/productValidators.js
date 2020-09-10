@@ -24,10 +24,10 @@ validator.deleteProducts = [
             //Get product
             const product = await Product.findOne({
                 _id: prouductId
-            })
+            }).exec()
 
-            //Check product is found
-            if (product === null) throw new Error(404, 'No Product found')
+            //Check product is found or not
+            if (!product) throw new Error(404, 'No Product found')
 
             res()
         } catch (error) {

@@ -1,6 +1,9 @@
 //Validators File it will contain user validators
 
-import { check, body } from "express-validator";
+import {
+  check,
+  body
+} from "express-validator";
 
 import encryptionService from "../services/encryptionService";
 import User from "../models/userModel";
@@ -17,15 +20,21 @@ validator.signup = [
   check("email", "Invalid Email").isEmail(),
 
   //Check if email is unique
-  body("email").custom(async (email) => {
-    const user = await User.findOne({
-      email,
-    });
+  body("email").custom(email => new Promise(async (res, rej) => {
+    try {
+      const user = await User.findOne({
+          email
+        })
+        .exec()
 
-    if (user) {
-      throw new Error(409, "User already exists");
+      if (user) throw new Error(409, "User already exists");
+
+      res()
+    } catch (error) {
+      // console.log(error)
+      rej(error)
     }
-  }),
+  })),
 
   //Check if password length is minimum 5 characters
   check("password", "Password must contain at least 5 characters").isLength({
@@ -43,51 +52,56 @@ validator.login = [
 
   //Check if email is unique
   body("email")
-    .custom(
-      (email) =>
-        new Promise(async (res, rej) => {
-          try {
-            const user = await User.findOne({
-              email,
-            });
+  .custom(
+    (email) =>
+    new Promise(async (res, rej) => {
+      try {
+        const user = await User.findOne({
+          email
+        }).exec()
 
-            if (!user) throw new Error(409, "User doesn't exists");
-            res();
-          } catch (err) {
-            console.log(err);
-            rej(err);
-          }
-        })
-    )
-    .bail(),
+        if (!user) throw new Error(409, "User doesn't exists");
+        res();
+      } catch (err) {
+        console.log(err);
+        rej(err);
+      }
+    })
+  )
+  .bail(),
 
   //Check if password is correct
   body("password").custom(
-    (password, { req }) =>
-      new Promise(async (res, rej) => {
-        try {
-          const { email } = req.body;
-          //Get user related to this email
-          //NOTE : Make sure to add .select('password) in the query to get the password field in the returned document
-          const user = await User.findOne({
-            email,
-          }).select("password");
+    (password, {
+      req
+    }) =>
+    new Promise(async (res, rej) => {
+      try {
+        const {
+          email
+        } = req.body;
+        //Get user related to this email
+        //NOTE : Make sure to add .select('password) in the query to get the password field in the returned document
+        const user = await User.findOne({
+            email
+          })
+          .exec()
 
-          //Check if password is correct
-          const isVerified = await encryptionService.verify(
-            password,
-            user.password
-          );
+        //Check if password is correct
+        const isVerified = await encryptionService.verify(
+          password,
+          user.password
+        );
 
-          //If password is not correct throw error
-          if (!isVerified) throw new Error(401, "Invalid Email or Password");
+        //If password is not correct throw error
+        if (!isVerified) throw new Error(401, "Invalid Email or Password");
 
-          res();
-        } catch (e) {
-          console.log(e);
-          rej(e);
-        }
-      })
+        res();
+      } catch (e) {
+        console.log(e);
+        rej(e);
+      }
+    })
   ),
 ];
 

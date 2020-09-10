@@ -14,6 +14,7 @@ export default (model, req) => new Promise(async (res, rej) => {
                 isLoggedIn: false
             }
         })
+        .exec()
 
         res('Logged out successfully')
     } catch (error) {

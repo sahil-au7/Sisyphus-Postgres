@@ -1,5 +1,5 @@
 /**
- * This is enum class for order status
+ * This is enum class for models
  */
 const status = {
     "PENDING": "Pending",

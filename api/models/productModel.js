@@ -1,31 +1,10 @@
-import {
-    Schema,
-    model
-} from 'mongoose'
+import schema from '../schema/productSchema'
+import PgInterface from '../interfaces/PgInterface'
 
-const product = new Schema({
-    _id: {
-        type: Schema.Types.ObjectId,
-        auto: true
-    },
-    vendorId: {
-        type: Schema.Types.ObjectId,
-        ref: 'Vendor',
-        required : true
-    },
-    name: {
-        type: String,
-        required: true
-    },
-    price: {
-        type: Number,
-        required: true,
-        min: 0
-    },
-    brand: {
-        type: String,
-        required: true
+class Product extends PgInterface {
+    constructor(data) {
+        super(data, schema)
     }
-})
+}
 
-export default new model('Product', product)
+export default Product

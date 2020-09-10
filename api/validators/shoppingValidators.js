@@ -9,6 +9,7 @@ import Order from '../models/orderModel'
 import Error from '../errorHandlers/CustomError'
 import Status from '../enums/orderEnum'
 import nextStatus from '../utilities/shoppingUtil'
+import Cart from '../models/cartModel'
 
 const validators = {}
 
@@ -23,27 +24,28 @@ validators.search = [
 //Checkout
 validators.checkout = [
     //Check if user provided delivery address and check if cart is empty
-    param('addressId').custom((val, {
+    param('addressId').custom((addressId, {
         req
     }) => new Promise(async (res, rej) => {
         try {
 
             //Check if user has items in the cart       
-            const user = User.findOne({
-                    _id: req._id
+            const cart = Cart.find({
+                    userId: req._id
                 })
-                .select('-address')
-                .select('cart')
+                .exec()
 
             //Check if the current address exist in the user database
             const address = Address.findOne({
-                _id: val
+                _id: addressId,
+                userId : req._id
             })
+            .exec()
 
-            const results = await Promise.all([user, address])
+            const results = await Promise.all([cart, address])
 
             //If there are no products in cart throw an error
-            if (results[0].cart.length === 0) throw new Error(404, 'Cart cannot be empty')
+            if (results[0].length === 0) throw new Error(404, 'Cart cannot be empty')
 
             //Check if the address provided by the user exists
             if (!results[1]) throw new Error(404, 'No Address Found')
@@ -56,7 +58,7 @@ validators.checkout = [
     }))
 ]
 
-//Cancel Order
+//User Cancel Order
 validators.cancel = [
     param('orderId').custom(val => new Promise(async (res, rej) => {
         try {
@@ -64,6 +66,7 @@ validators.cancel = [
             const results = await Order.findOne({
                 _id: val
             })
+            .exec()
 
             //Check if order exists
             if (!results) throw new Error(404, 'No Order Found')
@@ -98,6 +101,7 @@ validators.vendorAction = [
             const order = await Order.findOne({
                 _id: orderId
             })
+            .exec()
 
             //Check if order exists
             if (order === null) throw new Error(404, 'No Order Found')

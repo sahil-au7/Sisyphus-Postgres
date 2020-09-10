@@ -17,8 +17,8 @@ validator.signup = [
   body("email")
     .custom(async (email) => {
       const vendor = await Vendor.findOne({
-        email,
-      });
+        email
+      }).exec()
 
       if (vendor) {
         throw new Error(409, "Vendor already exists");
@@ -27,9 +27,18 @@ validator.signup = [
     .bail(),
 
   //Check if GSTIN number is valid
-  body("gstin", "Invalid GSTIN").custom((val) => {
-    return val.length === 12;
-  }),
+  body("gstin").custom((gstin) => new Promise(async (res, rej) => {
+    try {
+      const vendor = await Vendor.findOne({
+        gstin
+      }).exec()
+
+      if (vendor) throw new Error(409, "GSTIN already exists");
+      res()
+    } catch (error) {
+      rej(error)
+    }
+  })),
 
   //Check if password length is minimum 5 characters
   check("password", "Password must contain at least 5 characters").isLength({
@@ -54,7 +63,7 @@ validator.login = [
     .custom(async (email) => {
       const vendor = await Vendor.findOne({
         email,
-      });
+      }).exec()
 
       if (!vendor) {
         throw new Error(409, "Vendor doesn't exists");
@@ -72,7 +81,9 @@ validator.login = [
           //NOTE : Make sure to add .select('password) in the query to get the password field in the returned document
           const vendor = await Vendor.findOne({
             email,
-          }).select("password");
+          })
+          .select("password")
+          .exec()
 
           //Check if password is correct
           const isVerified = await encryptionService.verify(
